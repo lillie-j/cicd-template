@@ -1,10 +1,13 @@
-# Respository Template for Python
-This service is a basic template for Python applications..
+# CI/CD Templates
+This repository contains template files for CI/CD workflows (GitHub Actions), intended for use in Python-based projects.
+
+It contains a very simple application, composed of a FastAPI backend and a Streamlit frontend. This application is for demonstrative purposes/to provide code over which CI/CD steps can run.
+
 
 # Author
-James Riley : james.riley@capgemini.com
+Jacob Lillie : Jacob.Lillie@capgemini.com
 
-# Default Files / directories
+# Files/Directories
 - **src/** - This directory stores all of the python code (except for app.py).
 - **.flake8** - Configuration for flake8 linter. This helps control what rules you want applied to checking the style of your python code. E.g. Max line length.
 - **app.py** - This is the initialisng file of the whole application. It is standard for the starting file of your application to be named app.py or main.py.
