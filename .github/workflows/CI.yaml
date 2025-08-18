@@ -1,0 +1,42 @@
+# This workflow installs Python dependencies, runs tests, formats code,
+# lints, and performs a limited security scan using Bandit.
+
+name: CI/CD Template
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Detect Python version
+        id: detect-python
+        run: |
+          PYTHON_VER=""
+
+          # Parse Python version from .python-version
+          if [ -f .python-version ]; then
+            PYTHON_VER=$(cat .python-version)
+
+          # Parse Python version from pyproject.toml
+          if [ -f pyproject.toml ]; then
+            PYTHON_VER=$(grep 'requires-python' pyproject.toml | head -1 | cut -d'"' -f2 | sed 's/>=//')
+
+          # Parse Python version from Pipfile
+          elif [ -f Pipfile ]; then 
+            PYTHON_VER=$(grep 'python_version' Pipfile | head -1 | cut -d'"' -f2)
+          fi
+
+          # Raise error if no version found
+          if [ -z "$PYTHON_VER" ]; then 
+            echo "Error: No Python version detected in .python-version, pyproject.toml or Pipfile"
+            exit 1
+          fi
+
+          echo "Detected Python version: $PYTHON_VER"
+          echo "PYTHON_VER=$PYTHON_VER" >> $GITHUB_ENV
