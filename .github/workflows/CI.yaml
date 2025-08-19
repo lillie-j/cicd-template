@@ -40,3 +40,10 @@ jobs:
 
           echo "Detected Python version: $PYTHON_VER"
           echo "PYTHON_VER=$PYTHON_VER" >> $GITHUB_ENV
+
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VER }}
+
+
