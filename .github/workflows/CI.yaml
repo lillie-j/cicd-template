@@ -37,7 +37,12 @@ jobs:
             echo "Error: No Python version detected in .python-version, pyproject.toml or Pipfile"
             exit 1
           fi
-          
+
           echo "Detected Python version: $PYTHON_VER"
           echo "PYTHON_VER=$PYTHON_VER" >> $GITHUB_ENV
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VER }}
 
