@@ -82,5 +82,23 @@ jobs:
       - name: Install CI Dependencies
         run: |
           # Install dependencies for CI - Do not overwrite versions if already installed
-          CI_PACKAGES="bandit black flake8 mypy pytest"
+          CI_PACKAGES="bandit black flake8 mypy pytest pytest-cov"
+          source .venv/bin/activate
           uv pip install $CI_PACKAGES
+
+      - name: Run Tests
+        run: |
+          if [ -d "tests" ]; then
+            source .venv/bin/activate
+            pytest --cov=src ./tests -v --cov-report=html
+          else
+            echo "No /tests folder found - no tests will be run"
+          fi
+
+      - name: Upload Test Coverage Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: Coverage Report -${{ github.ref_name }}-${{ github.run_id}}
+          #Test coverage is locally save on runner at htmlcov/
+          path: htmlcov/
+          
