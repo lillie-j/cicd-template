@@ -14,7 +14,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Detect Python version
+      - name: Detect Python Version
         id: detect-python
         run: |
           PYTHON_VER=""
@@ -78,3 +78,9 @@ jobs:
             echo "Error: No dependency file found - expect one of pyproject.toml, Pipfile, or requirements.txt"
             exit 1
           fi
+
+      - name: Install CI Dependencies
+        run: |
+          # Install dependencies for CI - Do not overwrite versions if already installed
+          CI_PACKAGES="bandit black flake8 mypy pytest"
+          uv pip install $CI_PACKAGES
