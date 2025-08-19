@@ -20,20 +20,19 @@ jobs:
           PYTHON_VER=""
 
           # Parse Python version from .python-version
-          # if [ -f .python-version ]; then
-          #   PYTHON_VER=$(cat .python-version)
+          if [ -f .python-version ]; then
+            PYTHON_VER=$(cat .python-version)
 
           # Parse Python version from pyproject.toml
-          if [ -f pyproject.toml ]; then
+          elif [ -f pyproject.toml ]; then
             PYTHON_VER=$(grep 'requires-python' pyproject.toml | head -1 | cut -d'"' -f2 | sed 's/>=//')
 
           # Parse Python version from Pipfile
           elif [ -f Pipfile ]; then 
             PYTHON_VER=$(grep 'python_version' Pipfile | head -1 | cut -d'"' -f2)
-          fi
 
           # Raise error if no version found
-          if [ -z "$PYTHON_VER" ]; then 
+          elif [ -z "$PYTHON_VER" ]; then 
             echo "Error: No Python version detected in .python-version, pyproject.toml or Pipfile"
             exit 1
           fi
@@ -46,3 +45,36 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VER }}
 
+      - name: Install UV
+        run: curl -LS https://astral.sh/uv/install.sh | sh
+
+      - name: Install Dependencies 
+        run: |
+          # Dependencies will be installed system wide and not in a venv for simplicity
+
+          # Parse dependencies from pyproject.toml
+          if [ -f "pyproject.toml" ]; then
+            echo "Installing from pyproject.toml"
+            uv venv
+            source .venv/bin/activate
+            uv pip install -r pyproject.toml --all-extras
+
+          # Parse dependencies from Pipfile  
+          elif [ -f "Pipfile" ]; then
+            echo "Installing Pipenv"
+            pip install pipenv
+
+            echo "Installing from Pipfile"
+            pipenv install
+
+          # Parse dependencies from requirements.txt  
+          elif [ -f "requirements.txt" ]; then
+            echo "Installing from requirements.txt"
+            uv venv
+            source .venv/bin/activate
+            uv pip install -r requirements.txt --system
+
+          else
+            echo "Error: No dependency file found - expect one of pyproject.toml, Pipfile, or requirements.txt"
+            exit 1
+          fi
