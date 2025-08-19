@@ -98,7 +98,19 @@ jobs:
       - name: Upload Test Coverage Report
         uses: actions/upload-artifact@v4
         with:
-          name: Coverage Report -${{ github.ref_name }}-${{ github.run_id}}
+          name: coverage_report-${{ github.ref_name }}-${{ github.run_id}}
           #Test coverage is locally save on runner at htmlcov/
           path: htmlcov/
-          
+
+      - name: Run Bandit Scan
+        run: |
+          source .venv/bin/activate
+          bandit -r -f html -o bandit_report.html --exclude ./venv
+
+      - name: Upload Bandit Scan Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: bandit_report-${{ github.ref_name }}-${{ github.run_id}}.html
+          #Test coverage is locally save on runner at htmlcov/
+          path: bandit_report.html
+
