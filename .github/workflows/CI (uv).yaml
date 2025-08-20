@@ -1,0 +1,207 @@
+# This workflow is intended for Python projects managed using uv & pyproject.toml.
+# This workflow installs Python dependencies, runs tests,
+# lints, and performs a limited security scan using Bandit.
+
+name: CI (UV Managed Projects)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  Setup:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Detect Python Version
+        id: detect-python
+        run: |
+          PYTHON_VER=""
+
+          # Parse Python version from .python-version
+          if [ -f .python-version ]; then
+            PYTHON_VER=$(cat .python-version)
+
+          # Parse Python version from pyproject.toml - picks the minimum compatible version
+          elif [ -f pyproject.toml ]; then
+            PYTHON_VER=$(grep 'requires-python' pyproject.toml | head -1 | cut -d'"' -f2 | sed 's/>=//')
+
+          # Raise error if no version found
+          elif [ -z "$PYTHON_VER" ]; then 
+            echo "Error: No Python version detected in .python-version or pyproject.toml"
+            exit 1
+          fi
+
+          echo "Detected Python version: $PYTHON_VER"
+          echo "PYTHON_VER=$PYTHON_VER" >> $GITHUB_ENV
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VER }}
+
+      - name: Install UV
+        run: curl -LS https://astral.sh/uv/install.sh | sh
+
+      - name: Cache environment
+        #Caches environment so that dependencies only installed if changed between runs
+        uses: actions/cache@v3
+        with:
+          path: .venv
+          key: uv-${{ runner.os }}-${{ hashFiles('uv.lock') }}
+
+      - name: Install Dependencies 
+        run: |
+          uv venv
+          source .venv/bin/activate
+
+          # Parse dependencies from uv.lock
+          if [ -f "uv.lock" ]; then
+            echo "Installing from uv.lock"
+            uv sync
+
+          # Parse dependencies from requirements.txt  
+          elif [ -f "requirements.txt" ]; then
+            cat <<EOF
+          No uv.lock file detected. Installing dependencies from requirements.txt.
+          Recommend creating a uv.lock file. Cache is tied to uv.lock file.
+          EOF 
+            uv pip sync requirements.txt
+          
+          # Parse dependencies from pyproject.toml
+          elif [ -f "pyproject.toml" ]; then
+            cat <<EOF
+          No uv.lock file or requirements.txt detected. Installing dependencies from pyproject.toml.
+          Recommend creating a uv.lock file to lock exact versions of dependencies.
+          Cache is tied to uv.lock file. 
+          EOF
+            uv pip install -r pyproject.toml
+
+          else
+            echo "Error: No dependency file found - expect one of uv.lock, requirements.txt or pyproject.toml"
+            exit 1
+          fi
+
+      - name: Install CI Dependencies
+        run: |
+          # Install dependencies for CI
+          CI_PACKAGES="bandit flake8 pylint pytest pytest-cov"
+          source .venv/bin/activate
+          uv pip install $CI_PACKAGES
+
+
+  Test:
+    needs: Setup
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Restore environment
+        uses: actions/cache@v3
+        with:
+          path: .venv
+          key: uv-${{ runner.os }}-${{ hashFiles('uv.lock') }}
+
+
+      - name: Run Tests
+        run: |
+          if [ -d "tests" ]; then
+            source .venv/bin/activate
+            pytest --cov=src ./tests -v --cov-report=html
+          else
+            echo "No /tests folder found - no tests will be run"
+          fi
+
+      - name: Upload Test Coverage Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage_report-${{ github.ref_name }}-${{ github.run_id}}
+          #Test coverage is locally save on runner at htmlcov/
+          path: htmlcov/
+          if-no-files-found: ignore
+
+
+  Security-Scan:
+    needs: Setup
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Restore environment
+        uses: actions/cache@v3
+        with:
+          path: .venv
+          key: uv-${{ runner.os }}-${{ hashFiles('uv.lock') }}
+
+      - name: Run Bandit Scan
+      # Bandit can raise false-positives & be too cautious for most use cases. Scan configured to never fail.
+      # User can view scan report and address vulnerabilities after workflow run.
+        run: |
+          source .venv/bin/activate
+          bandit -c bandit.yaml -r . -f html -o bandit_report.html || true
+
+      - name: Upload Bandit Scan Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: bandit_report-${{ github.ref_name }}-${{ github.run_id}}.html
+          path: bandit_report.html
+          if-no-files-found: ignore
+
+  Lint:
+  #Linting done by both Flake8/pylint for max coverage.
+  #Linting configured to never fail
+  #Pylint score badge produced as artifact for manual incorporation into repo if user requires.
+    needs: Setup
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Restore environment
+        uses: actions/cache@v3
+        with:
+          path: .venv
+          key: uv-${{ runner.os }}-${{ hashFiles('uv.lock') }}
+      
+      - name: Lint Code (Flake 8)
+        run: |
+          source .venv/bin/activate
+          flake8 ./src --exit-zero
+
+      - name: Lint Code (Pylint)
+        run: |
+          source .venv/bin/activate
+          pylint ./src | tee pylint.log || true
+          SCORE=$(grep "Your code has been rated at" pylint.log | awk '{print $7}' | cut -d'/' -f1)
+          COLOR="red"
+          if (( $(echo "$SCORE >=9" | bc -l) )); then
+            COLOR="green"
+          elif (( $(echo "$SCORE >=7" | bc -l ) )); then
+            COLOR="yellow"
+          elif (( $(echo "$SCORE >=5" | bc -l) )); then
+            COLOR="orange"  
+          elif (( $(echo "$SCORE <5" | bc -l) )); then
+            COLOR="red"
+          fi
+
+          python -m pybadges \
+          --left-text="pylint" \
+          --right-text=$SCORE \
+          --right-color=$COLOR \
+          > pylint-badge.svg
+
+      - name: Upload Pylint Score Badge
+        uses: actions/upload-artifact@v4
+        with:
+          name: pylint-badge-${{ github.ref_name }}-${{ github.run_id}}.svg
+          path: pylint-badge.svg
+          if-no-files-found: ignore
+
+          
+
+
+
