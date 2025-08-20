@@ -2,13 +2,16 @@
 Provides simple Streamlit Frontend for demonstrating a CI/CD pipeline template.
 """
 
+import os
 import streamlit as st
 import requests
 
+
 st.title("Test API Trigger Dashboard")
 
-OLD_CT_API_URL = "http://localhost:8000/old_ct_names"
-NEW_CT_API_URL = "http://localhost:8000/new_ct_names"
+API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
+OLD_CT_API_URL = f"{API_BASE_URL}/old_ct_names"
+NEW_CT_API_URL = f"{API_BASE_URL}/new_ct_names"
 
 if st.button("Get Old CT Names"):
     try:

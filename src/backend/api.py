@@ -2,9 +2,9 @@
 Provides simple API endpoints for demonstrating a CI/CD pipeline template.
 """
 
-from typing import List, Optional, Literal
+from typing import List, Optional
 from fastapi import FastAPI
-from pydantic import BaseModel, root_validator, field_validator, Field, model_validator
+from pydantic import BaseModel, field_validator, model_validator
 
 app = FastAPI()
 
