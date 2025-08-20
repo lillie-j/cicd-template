@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  Setup:
     runs-on: ubuntu-latest
 
     steps:
@@ -48,6 +48,16 @@ jobs:
       - name: Install UV
         run: curl -LS https://astral.sh/uv/install.sh | sh
 
+      - name: Install Pipenv
+        run: pip install pipenv
+
+      - name: Cache environment
+        uses: actions/cache@v3
+        with:
+          path: .venv
+          key: uv-${{ runner.os }}-${{ hashFiles('uv.lock') }}
+
+
       - name: Install Dependencies 
         run: |
           # Dependencies will be installed system wide and not in a venv for simplicity
@@ -61,9 +71,6 @@ jobs:
 
           # Parse dependencies from Pipfile  
           elif [ -f "Pipfile" ]; then
-            echo "Installing Pipenv"
-            pip install pipenv
-
             echo "Installing from Pipfile"
             pipenv sync
 
@@ -86,6 +93,21 @@ jobs:
           source .venv/bin/activate
           uv pip install $CI_PACKAGES
 
+
+  Test:
+    needs: Setup
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Restore environment
+        uses: actions/cache@v3
+        with:
+          path: .venv
+          key: uv-${{ runner.os }}-${{ hashFiles('uv.lock') }}
+
+
       - name: Run Tests
         run: |
           if [ -d "tests" ]; then
@@ -101,6 +123,21 @@ jobs:
           name: coverage_report-${{ github.ref_name }}-${{ github.run_id}}
           #Test coverage is locally save on runner at htmlcov/
           path: htmlcov/
+          if-no-files-found: ignore
+
+
+  Security-Scan:
+    needs: Setup
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Restore environment
+        uses: actions/cache@v3
+        with:
+          path: .venv
+          key: uv-${{ runner.os }}-${{ hashFiles('uv.lock') }}
 
       - name: Run Bandit Scan
         run: |
@@ -113,7 +150,21 @@ jobs:
           name: bandit_report-${{ github.ref_name }}-${{ github.run_id}}.html
           #Test coverage is locally save on runner at htmlcov/
           path: bandit_report.html
+          if-no-files-found: ignore
 
+  Lint:
+    needs: Setup
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Restore environment
+        uses: actions/cache@v3
+        with:
+          path: .venv
+          key: uv-${{ runner.os }}-${{ hashFiles('uv.lock') }}
+      
       - name: Lint Code (Flake 8)
         run: |
           source .venv/bin/activate
@@ -141,13 +192,15 @@ jobs:
           --left-text="pylint" \
           --right-text=$SCORE \
           --right-color=$COLOR \
-          > ./docs/pylint-badge.svg
+          > pylint-badge.svg
 
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git add -f ./docs/pylint-badge.svg
-          git commit -m "Update pylint badge"
-          git push
+      - name: Upload Pylint Score Badge
+        uses: actions/upload-artifact@v4
+        with:
+          name: pylint-badge-${{ github.ref_name }}-${{ github.run_id}}.svg
+          path: pylint-badge.svg
+          if-no-files-found: ignore
+
           
 
 
