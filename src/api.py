@@ -31,7 +31,9 @@ class CTResponse(BaseModel):
         """
         for i, item in enumerate(val):
             if not item.strip():
-                raise ValueError(f"Message item at index {i} cannot be empty or whitespace")
+                raise ValueError(
+                    f"Message item at index {i} cannot be empty or whitespace"
+                )
         return val
 
     # Compute count of CTs for response - class method

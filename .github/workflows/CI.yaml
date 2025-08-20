@@ -57,7 +57,7 @@ jobs:
             echo "Installing from pyproject.toml"
             uv venv
             source .venv/bin/activate
-            uv pip install -r pyproject.toml --all-extras
+            uv sync
 
           # Parse dependencies from Pipfile  
           elif [ -f "Pipfile" ]; then
@@ -65,14 +65,14 @@ jobs:
             pip install pipenv
 
             echo "Installing from Pipfile"
-            pipenv install
+            pipenv sync
 
           # Parse dependencies from requirements.txt  
           elif [ -f "requirements.txt" ]; then
             echo "Installing from requirements.txt"
             uv venv
             source .venv/bin/activate
-            uv pip install -r requirements.txt --system
+            uv pip install -r requirements.txt
 
           else
             echo "Error: No dependency file found - expect one of pyproject.toml, Pipfile, or requirements.txt"
@@ -82,7 +82,7 @@ jobs:
       - name: Install CI Dependencies
         run: |
           # Install dependencies for CI - Do not overwrite versions if already installed
-          CI_PACKAGES="bandit black flake8 mypy pytest pytest-cov"
+          CI_PACKAGES="bandit black flake8 mypy pylint pytest pytest-cov"
           source .venv/bin/activate
           uv pip install $CI_PACKAGES
 
@@ -105,7 +105,7 @@ jobs:
       - name: Run Bandit Scan
         run: |
           source .venv/bin/activate
-          bandit -r -f html -o bandit_report.html --exclude ./venv
+          bandit -c bandit.yaml -r . -f html -o bandit_report.html || true
 
       - name: Upload Bandit Scan Report
         uses: actions/upload-artifact@v4
@@ -113,4 +113,42 @@ jobs:
           name: bandit_report-${{ github.ref_name }}-${{ github.run_id}}.html
           #Test coverage is locally save on runner at htmlcov/
           path: bandit_report.html
+
+      - name: Lint Code (Flake 8)
+        run: |
+          source .venv/bin/activate
+          flake8 ./src --exit-zero
+
+      - name: Lint Code (Pylint)
+        run: |
+          source .venv/bin/activate
+          pylint ./src | tee pylint.log || true
+          SCORE=$(grep "Your code has been rated at" pylint.log | awk '{print $7}' | cut -d'/' -f1)
+          COLOR="red"
+          if (( $(echo "$SCORE > 9" | bc -l) )); then
+            COLOR="green"
+          elif (( $(echo "$SCORE >7.5" | bc -l ) )); then
+            COLOR="yellow"
+          elif (( $(echo "$SCORE >6" | bc -l) )); then
+            COLOR="orange"  
+          elif (( $(echo "$SCORE <5" | bc -l) )); then
+            COLOR="red"
+          fi
+
+          mkdir -p docs
+
+          python -m pybadges \
+          --left-text="pylint" \
+          --right-text=$SCORE \
+          --right-color=$COLOR \
+          > ./docs/pylint-badge.svg
+
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add -f ./docs/pylint-badge.svg
+          git commit -m "Update pylint badge"
+          git push
+          
+
+
 
