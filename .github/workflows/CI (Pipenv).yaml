@@ -1,8 +1,8 @@
-# This workflow is intended for Python projects managed using uv & pyproject.toml.
+# This workflow is intended for Python projects managed using Pipenv & Pipfile.
 # This workflow installs Python dependencies, runs tests,
 # lints, and performs a limited security scan using Bandit.
 
-name: CI (UV Managed Projects)
+name: CI (Pipenv Managed Projects)
 
 on:
   workflow_dispatch:
@@ -24,13 +24,13 @@ jobs:
           if [ -f .python-version ]; then
             PYTHON_VER=$(cat .python-version)
 
-          # Parse Python version from pyproject.toml - picks the minimum compatible version
-          elif [ -f pyproject.toml ]; then
-            PYTHON_VER=$(grep 'requires-python' pyproject.toml | head -1 | cut -d'"' -f2 | sed 's/>=//')
-
+          # Parse Python version from Pipfile
+          elif [ -f Pipfile ]; then 
+            PYTHON_VER=$(grep 'python_version' Pipfile | head -1 | cut -d'"' -f2)
+        
           # Raise error if no version found
           elif [ -z "$PYTHON_VER" ]; then 
-            echo "Error: No Python version detected in .python-version or pyproject.toml"
+            echo "Error: No Python version detected in .python-version or Pipfile"
             exit 1
           fi
 
@@ -42,45 +42,48 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VER }}
 
-      - name: Install UV
-        run: curl -LS https://astral.sh/uv/install.sh | sh
+      - name: Install Pipenv
+        run: pip install pipenv
 
       - name: Cache environment
         #Caches environment so that dependencies only installed if changed between runs
         uses: actions/cache@v3
         with:
           path: .venv
-          key: uv-${{ runner.os }}-${{ hashFiles('uv.lock') }}
+          key: Pipenv-${{ runner.os }}-${{ hashFiles('Pipfile.lock') }}
 
       - name: Install Dependencies 
         run: |
-          uv venv
+
+          # Create venv in project
+          export PIPENV_VENV_IN_PROJECT=1
+          pipenv --venv
           source .venv/bin/activate
 
-          # Parse dependencies from uv.lock
-          if [ -f "uv.lock" ]; then
-            echo "Installing from uv.lock"
-            uv sync
-
-          # Parse dependencies from requirements.txt  
+          # Parse dependencies from Pipfile.lock
+          if [ -f "Pipfile.lock" ]; then
+            echo "Installing dependencies from Pipfile.lock"
+          pipenv install --ignore-pipfile
+            
+          # Parse dependencies from Pipfile
+          elif [ -f "Pipfile" ]; then
+            cat <<EOF
+          No Pipfile.lock file detected. Installing dependencies from Pipfile.
+          Recommend creating a Pipfile.lock. Cache is tied to Pipfile.lock.
+          EOF 
+            pipenv install
+          
+          # Parse dependencies from requirements.txt
           elif [ -f "requirements.txt" ]; then
             cat <<EOF
-          No uv.lock file detected. Installing dependencies from requirements.txt.
-          Recommend creating a uv.lock file. Cache is tied to uv.lock file.
-          EOF 
-            uv pip sync requirements.txt
-          
-          # Parse dependencies from pyproject.toml
-          elif [ -f "pyproject.toml" ]; then
-            cat <<EOF
-          No uv.lock file or requirements.txt detected. Installing dependencies from pyproject.toml.
-          Recommend creating a uv.lock file to lock exact versions of dependencies.
-          Cache is tied to uv.lock file. 
+          No Pipfile.lock or Pipfile detected. Installing dependencies from rqeuirements.txt.
+          Recommend creating a Pipfile.lock to lock exact versions of dependencies.
+          Cache is tied to Pipfile.lock. 
           EOF
-            uv pip install -r pyproject.toml
+            pipenv run pip install -r requirements.txt
 
           else
-            echo "Error: No dependency file found - expect one of uv.lock, requirements.txt or pyproject.toml"
+            echo "Error: No dependency file found - expect one of Pipfile.lock, Pipfile, requirements.txt"
             exit 1
           fi
 
@@ -89,7 +92,7 @@ jobs:
           # Install dependencies for CI
           CI_PACKAGES="bandit flake8 pylint pytest pytest-cov"
           source .venv/bin/activate
-          uv pip install $CI_PACKAGES
+          pipenv install $CI_PACKAGES
 
 
   Test:
@@ -103,7 +106,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: .venv
-          key: uv-${{ runner.os }}-${{ hashFiles('uv.lock') }}
+          key: Pipenv-${{ runner.os }}-${{ hashFiles('Pipfile.lock') }}
 
 
       - name: Run Tests
@@ -135,7 +138,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: .venv
-          key: uv-${{ runner.os }}-${{ hashFiles('uv.lock') }}
+          key: Pipenv-${{ runner.os }}-${{ hashFiles('Pipfile.lock') }}
 
       - name: Run Bandit Scan
       # Bandit can raise false-positives & be too cautious for most use cases. Scan configured to never fail.
@@ -165,7 +168,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: .venv
-          key: uv-${{ runner.os }}-${{ hashFiles('uv.lock') }}
+          key: Pipenv-${{ runner.os }}-${{ hashFiles('Pipfile.lock') }}
       
       - name: Lint Code (Flake 8)
         run: |
