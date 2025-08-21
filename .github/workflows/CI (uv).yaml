@@ -167,40 +167,12 @@ jobs:
           path: .venv
           key: uv-${{ runner.os }}-${{ hashFiles('uv.lock') }}
       
-      - name: Lint Code (Flake 8)
-        run: |
-          source .venv/bin/activate
-          flake8 ./src --exit-zero
-
-      - name: Lint Code (Pylint)
-        run: |
-          source .venv/bin/activate
-          pylint ./src | tee pylint.log || true
-          SCORE=$(grep "Your code has been rated at" pylint.log | awk '{print $7}' | cut -d'/' -f1)
-          COLOR="red"
-          if (( $(echo "$SCORE >=9" | bc -l) )); then
-            COLOR="green"
-          elif (( $(echo "$SCORE >=7" | bc -l ) )); then
-            COLOR="yellow"
-          elif (( $(echo "$SCORE >=5" | bc -l) )); then
-            COLOR="orange"  
-          elif (( $(echo "$SCORE <5" | bc -l) )); then
-            COLOR="red"
-          fi
-
-          python -m pybadges \
-          --left-text="pylint" \
-          --right-text=$SCORE \
-          --right-color=$COLOR \
-          > pylint-badge.svg
-
-      - name: Upload Pylint Score Badge
-        uses: actions/upload-artifact@v4
+      - name: Lint
+        uses: ./.github/actions/lint
         with:
-          name: pylint-badge-${{ github.ref_name }}-${{ github.run_id}}.svg
-          path: pylint-badge.svg
-          if-no-files-found: ignore
-
+          folders-to-exclude: 'tests,.venv'
+          ignore-failures: 'true'
+       
   Docker_Build:
     needs: Test
     runs-on: ubuntu-latest
