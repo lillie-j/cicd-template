@@ -1,8 +1,8 @@
-# This workflow is intended for Python projects managed using uv & pyproject.toml.
+# This workflow is intended for Python projects
 # This workflow installs Python dependencies, runs tests,
-# lints, and performs a limited security scan using Bandit.
+# lints, security scans and build Docker images.
 
-name: CI (UV Managed Projects)
+name: CI Template Process
 
 on:
   workflow_dispatch:
