@@ -138,23 +138,12 @@ jobs:
           key: uv-${{ runner.os }}-${{ hashFiles('uv.lock') }}
 
       - name: Run Bandit Scan
-      # Bandit can raise false-positives & be too cautious for most use cases. Scan configured to never fail.
-      # User can view scan report and address vulnerabilities after workflow run.
-        run: |
-          source .venv/bin/activate
-          bandit -c bandit.yaml -r . -f html -o bandit_report.html || true
-
-      - name: Upload Bandit Scan Report
-        uses: actions/upload-artifact@v4
+        uses: ./.github/actions/scan
         with:
-          name: bandit_report-${{ github.ref_name }}-${{ github.run_id}}.html
-          path: bandit_report.html
-          if-no-files-found: ignore
+          exclude-folders: './tests'
+
 
   Lint:
-  #Linting done by both Flake8/pylint for max coverage.
-  #Linting configured to never fail
-  #Pylint score badge produced as artifact for manual incorporation into repo if user requires.
     needs: Setup
     runs-on: ubuntu-latest
     steps:
