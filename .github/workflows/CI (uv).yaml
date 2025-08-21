@@ -10,7 +10,6 @@ on:
 jobs:
   Setup:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -34,8 +33,11 @@ jobs:
     needs: Setup
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repo & restore environment
-        uses: ./.github/actions/checkout_repo_restore_env
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Restore environment
+        uses: ./.github/actions/restore_env_from_cache
         with:
           dependency-manager: 'uv'
 
@@ -47,8 +49,11 @@ jobs:
     needs: Setup
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repo & restore environment
-        uses: ./.github/actions/checkout_repo_restore_env
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Restore environment
+        uses: ./.github/actions/restore_env_from_cache
         with:
           dependency-manager: 'uv'
 
@@ -62,8 +67,11 @@ jobs:
     needs: Setup
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repo & restore environment
-        uses: ./.github/actions/checkout_repo_restore_env
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Restore environment
+        uses: ./.github/actions/restore_env_from_cache
         with:
           dependency-manager: 'uv'
       

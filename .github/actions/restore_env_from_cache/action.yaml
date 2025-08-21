@@ -6,10 +6,7 @@ inputs:
     required: true
 runs:
   using: "composite"
-  steps:
-    - name: Checkout Repo
-      uses: actions/checkout@v4
-    
+  steps:    
     - name: Cache environment (uv)
       if: ${{ inputs.dependency-manager == 'uv'}}
       uses: actions/cache@v3
