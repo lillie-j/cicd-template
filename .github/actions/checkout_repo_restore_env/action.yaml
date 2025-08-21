@@ -1,0 +1,36 @@
+name: Checkout Repo & Restore Environment
+description: Checks out a repo & reproduces a cached environment
+inputs:
+  dependency-manager:
+    description: The package manager used in this project (uv, pipenv, or  venv)
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout Repo
+      uses: actions/checkout@v4
+    
+    - name: Cache environment (uv)
+      if: ${{ inputs.dependency-manager == 'uv'}}
+      uses: actions/cache@v3
+      with:
+        path: .venv
+        key: uv-${{ runner.os }}-${{ hashFiles('uv.lock') }}
+
+    - name: Cache environment (pipenv)
+      if: ${{ inputs.dependency-manager == 'pipenv'}}
+      uses: actions/cache@v3
+      with:
+        path: .venv
+        key: uv-${{ runner.os }}-${{ hashFiles('Pipfile.lock') }}
+
+    - name: Cache environment (venv)
+      if: ${{ inputs.dependency-manager == 'venv'}}
+      uses: actions/cache@v3
+      with:
+        path: .venv
+        key: uv-${{ runner.os }}-${{ hashFiles('requirements.txt') }}  
+
+
+
+

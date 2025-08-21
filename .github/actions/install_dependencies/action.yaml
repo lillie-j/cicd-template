@@ -10,7 +10,7 @@ runs:
   - name: Install uv
     if: ${{ inputs.dependency-manager == 'uv'}}
     shell: bash
-    run: curl -LS https://astral.sh/uv/install.sh | sh
+    run: curl -LS https://astral.sh/uv/install.sh | bash
 
   - name: Cache environment (uv)
     if: ${{ inputs.dependency-manager == 'uv'}}

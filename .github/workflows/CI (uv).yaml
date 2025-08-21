@@ -16,31 +16,13 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Detect Python Version
-        id: detect-python
-        run: |
-          PYTHON_VER=""
-
-          # Parse Python version from .python-version
-          if [ -f .python-version ]; then
-            PYTHON_VER=$(cat .python-version)
-
-          # Parse Python version from pyproject.toml - picks the minimum compatible version
-          elif [ -f pyproject.toml ]; then
-            PYTHON_VER=$(grep 'requires-python' pyproject.toml | head -1 | cut -d'"' -f2 | sed 's/>=//')
-
-          # Raise error if no version found
-          elif [ -z "$PYTHON_VER" ]; then 
-            echo "Error: No Python version detected in .python-version or pyproject.toml"
-            exit 1
-          fi
-
-          echo "Detected Python version: $PYTHON_VER"
-          echo "PYTHON_VER=$PYTHON_VER" >> $GITHUB_ENV
-
+        id: python
+        uses: ./.github/actions/detect_python
+        
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ env.PYTHON_VER }}
+          python-version: ${{ steps.python.outputs.version }}
 
       - name: Install Dependencies
         uses: ./.github/actions/install_dependencies
@@ -48,37 +30,27 @@ jobs:
           dependency-manager: 'uv' 
         
 
-
   Test:
     needs: Setup
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Restore environment
-        uses: actions/cache@v3
+      - name: Checkout repo & restore environment
+        uses: ./.github/actions/checkout_repo_restore_env
         with:
-          path: .venv
-          key: uv-${{ runner.os }}-${{ hashFiles('uv.lock') }}
+          dependency-manager: 'uv'
 
       - name: Run Tests
         uses: ./.github/actions/test
-
 
 
   Security-Scan:
     needs: Setup
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Restore environment
-        uses: actions/cache@v3
+      - name: Checkout repo & restore environment
+        uses: ./.github/actions/checkout_repo_restore_env
         with:
-          path: .venv
-          key: uv-${{ runner.os }}-${{ hashFiles('uv.lock') }}
+          dependency-manager: 'uv'
 
       - name: Run Bandit Scan
         uses: ./.github/actions/scan
@@ -90,14 +62,10 @@ jobs:
     needs: Setup
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Restore environment
-        uses: actions/cache@v3
+      - name: Checkout repo & restore environment
+        uses: ./.github/actions/checkout_repo_restore_env
         with:
-          path: .venv
-          key: uv-${{ runner.os }}-${{ hashFiles('uv.lock') }}
+          dependency-manager: 'uv'
       
       - name: Lint
         uses: ./.github/actions/lint
