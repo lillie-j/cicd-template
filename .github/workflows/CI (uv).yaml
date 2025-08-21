@@ -87,55 +87,18 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        service: [backend, frontend]
+        context: [./src/backend, ./src/frontend]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Docker
-        uses: docker/setup-buildx-action@v2
-
-      - name: Generate Docker Tag
-        id: set_tag
-        run: |
-          # Get branch name and sanitise it
-          BRANCH=$(echo "${{ github.ref_name || 'manual' }}" | sed 's/\//-/g')
-
-          # Get current date
-          DATE=$(date +'%Y-%m-%d')
-
-          # Get short commit hash (fallback to workflow run ID for manual triggers)
-          if [ "${{ github.sha }}" == "" ]; then
-            SHORT_SHA="${{ github.run_id }}"
-          else
-            SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
-          fi
-
-          # Combine them into the Docker tag
-          TAG="${BRANCH}-${DATE}-${SHORT_SHA}"
-          echo "Generated Tag: $TAG"
-          echo "TAG=$TAG" >> $GITHUB_ENV
-
-      - name: Build and tag Docker image
-        run: |
-          docker buildx build \
-            --platform linux/amd64 \
-            --tag cicdtemplate/${{ matrix.service }}:${{ env.TAG }} \
-            --file ./src/${{ matrix.service }}/Dockerfile \
-            ./src/${{ matrix.service }} \
-            --load
-          docker save cicdtemplate/${{ matrix.service }}:${{ env.TAG }} -o ${{ matrix.service }}-${{ env.TAG }}.tar
-
-      - name: Upload Image
-        uses: actions/upload-artifact@v4
+      - name: Build Image
+        uses: ./.github/actions/build
         with:
-          name: ${{ matrix.service }}-${{ env.TAG }}
-          path: ${{ matrix.service }}-${{ env.TAG }}.tar
-          if-no-files-found: ignore
+          build-context: ${{ matrix.context }}
+          container-repo: "test"
+          build-platform: "linux/amd64"
 
-
-
-          
-
+      
 
 

@@ -7,6 +7,23 @@ inputs:
 runs:
   using: "composite"
   steps:
+  - name: Validate dependency manager
+    shell: bash
+    run: |
+      valid_dependency_managers=("uv" "pipenv" "venv")
+      valid=false
+      for item in "${valid_dependency_managers[@]}"; do
+        if [[ "${{inputs.dependency-manager}}" == "$item" ]];then
+          valid=true
+          break
+        fi
+      done
+
+      if ! $valid; then
+        echo "${{ inputs.dependency-manager}} must be one of uv, pipenv, or venv"
+        exit 1
+      fi
+
   - name: Install uv
     if: ${{ inputs.dependency-manager == 'uv'}}
     shell: bash

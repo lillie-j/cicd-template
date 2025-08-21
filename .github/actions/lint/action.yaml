@@ -2,12 +2,12 @@ name: 'Lint (Flake8 & Pylint)'
 description: Lints Python code using Flake8 & PyLint. Outputs a pylint score badge as an artifact.
 inputs:
   folders-to-exclude:
-    description: Folders in repo to exclude from linting
-    required: true
-    default: 'tests,.venv'
+    description: Folders in repo to exclude from linting (comma separated, no spaces)
+    required: false
+    default: 'tests'
   ignore-failures:
     description: Set to 'true' to not fail if linters detect issues, 'false' to fail if linters detect issues.
-    required: true
+    required: false
     default: 'true'
 runs:
   using: "composite"
@@ -15,15 +15,17 @@ runs:
     - name: Lint Code (Flake 8)
       shell: bash
       run: |
-            source .venv/bin/activate
-            if [[ "${{ inputs.ignore-failures }}" == "true" ]]; then
-              flake8 . --exclude="${{ inputs.folders-to-exclude}}" --exit-zero
-            elif [[ "${{ inputs.ignore-failures }}" == "false" ]]; then
-              flake8 . --exclude="${{ inputs.folders-to-exclude}}"
-            else
-              echo "ignore-failures must be either 'true' or 'false'"
-              exit 1
-            fi
+        source .venv/bin/activate
+        if [[ "${{ inputs.ignore-failures }}" == "true" ]]; then
+          flake8 . --exclude="${{ inputs.folders-to-exclude}},.venv" --exit-zero
+
+        elif [[ "${{ inputs.ignore-failures }}" == "false" ]]; then
+          flake8 . --exclude="${{ inputs.folders-to-exclude}},.venv"
+
+        else
+          echo "ignore-failures must be either 'true' or 'false'"
+          exit 1
+        fi
 
 
     - name: Lint Code (Pylint)
@@ -31,14 +33,16 @@ runs:
       run: |
             source .venv/bin/activate
             if [[ "${{ inputs.ignore-failures }}" == "true" ]]; then
-               pylint . --ignore="${{ inputs.folders-to-exclude}}" | tee pylint.log || true
+               pylint . --ignore="${{ inputs.folders-to-exclude}},.venv" | tee pylint.log || true
+
             elif [[ "${{ inputs.ignore-failures }}" == "false" ]]; then
               #Exit code of pipeline is last command, - tee should return 0. Need to fail pipeline if pylint does not return 0.
-              pylint . --ignore="${{ inputs.folders-to-exclude}}" | tee pylint.log
+              pylint . --ignore="${{ inputs.folders-to-exclude}},.venv" | tee pylint.log
               EXIT_CODE=${PIPESTATUS[0]}
               if [[ $EXIT_CODE -ne 0 ]]; then
                exit $EXIT_CODE
               fi
+              
             else
               echo "ignore-failures must be either 'true' or 'false'"
               exit 1

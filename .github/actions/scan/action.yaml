@@ -3,14 +3,14 @@ description: Performs a Bandit Security Scan on Python Code. Outputs a Scan Repo
 inputs:
   exclude-folders:
     description: Comma separated list of folders (no spaces) to exclude from scan
-    required: true
+    required: false
     default: './tests'
 runs:
   using: "composite"
   steps:
   - name: Run Bandit Scan
     shell: bash
-    # Bandit can raise false-positives & be too cautious for most use cases. Scan configured to never fail.
+    # Scan configured to never fail due to over-cautious vulnerability detection.
     # User can view scan report and address vulnerabilities after workflow run.
     run: |
           source .venv/bin/activate
