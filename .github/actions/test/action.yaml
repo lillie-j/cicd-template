@@ -1,0 +1,23 @@
+name: 'Run Tests (Pytest)'
+description: Runs all tests in ./tests using the Pytest Framework. Outputs a Coverage Report (HTML) as an artifact.
+runs:
+  using: "composite"
+  steps:
+  - name: Run Tests
+    shell: bash
+    run: |
+      if [ -d "tests" ]; then
+        source .venv/bin/activate
+        pytest --cov=src ./tests -v --cov-report=html
+      else
+        echo "No /tests folder found - no tests will be run"
+        exit 0
+      fi
+
+  - name: Upload Test Coverage Report
+    uses: actions/upload-artifact@v4
+    with:
+      name: coverage_report-${{ github.ref_name }}-${{ github.run_id}}
+      #Test coverage is locally save on runner at htmlcov/
+      path: htmlcov/
+      if-no-files-found: ignore

@@ -105,23 +105,9 @@ jobs:
           path: .venv
           key: uv-${{ runner.os }}-${{ hashFiles('uv.lock') }}
 
-
       - name: Run Tests
-        run: |
-          if [ -d "tests" ]; then
-            source .venv/bin/activate
-            pytest --cov=src ./tests -v --cov-report=html
-          else
-            echo "No /tests folder found - no tests will be run"
-          fi
+        uses: ./.github/actions/test
 
-      - name: Upload Test Coverage Report
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage_report-${{ github.ref_name }}-${{ github.run_id}}
-          #Test coverage is locally save on runner at htmlcov/
-          path: htmlcov/
-          if-no-files-found: ignore
 
 
   Security-Scan:
@@ -161,6 +147,7 @@ jobs:
         with:
           folders-to-exclude: 'tests,.venv'
           ignore-failures: 'true'
+
        
   Docker_Build:
     needs: Test
