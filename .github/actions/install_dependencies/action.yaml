@@ -1,0 +1,147 @@
+name: "Install Dependencies"
+description: "Install dependencies using chosen package manager. Supports uv, Pipenv, venv."
+inputs:
+  dependency-manager:
+    description: The package manager used in this project (uv, pipenv, or  venv)
+    required: true
+runs:
+  using: "composite"
+  steps:
+  - name: Validate dependency manager
+    shell: bash
+    run: |
+      valid_dependency_managers=("uv" "pipenv" "venv")
+      valid=false
+      for item in "${valid_dependency_managers[@]}"; do
+        if [[ "${{inputs.dependency-manager}}" == "$item" ]];then
+          valid=true
+          break
+        fi
+      done
+
+      if ! $valid; then
+        echo "${{ inputs.dependency-manager}} must be one of uv, pipenv, or venv"
+        exit 1
+      fi
+
+  - name: Install uv
+    if: ${{ inputs.dependency-manager == 'uv'}}
+    shell: bash
+    run: curl -LS https://astral.sh/uv/install.sh | bash
+
+  - name: Cache environment (uv)
+    if: ${{ inputs.dependency-manager == 'uv'}}
+    uses: actions/cache@v3
+    with:
+      path: .venv
+      key: uv-${{ runner.os }}-${{ hashFiles('uv.lock') }}
+
+  - name: Cache environment (pipenv)
+    if: ${{ inputs.dependency-manager == 'pipenv'}}
+    uses: actions/cache@v3
+    with:
+      path: .venv
+      key: uv-${{ runner.os }}-${{ hashFiles('Pipfile.lock') }}
+
+  - name: Cache environment (venv)
+    if: ${{ inputs.dependency-manager == 'venv'}}
+    uses: actions/cache@v3
+    with:
+      path: .venv
+      key: uv-${{ runner.os }}-${{ hashFiles('requirements.txt') }}  
+
+  - name: Install Dependencies (uv)
+    if: ${{ inputs.dependency-manager == 'uv'}}
+    shell: bash
+    run: |
+          uv venv
+          source .venv/bin/activate
+
+          # Parse dependencies from uv.lock
+          if [ -f "uv.lock" ]; then
+            echo "Installing from uv.lock"
+            uv sync
+
+          # Parse dependencies from requirements.txt  
+          elif [ -f "requirements.txt" ]; then
+            cat <<EOF
+          No uv.lock file detected. Installing dependencies from requirements.txt.
+          Recommend creating a uv.lock file. Cache is tied to uv.lock file.
+          EOF 
+            uv pip sync requirements.txt
+          
+          # Parse dependencies from pyproject.toml
+          elif [ -f "pyproject.toml" ]; then
+            cat <<EOF
+          No uv.lock file or requirements.txt detected. Installing dependencies from pyproject.toml.
+          Recommend creating a uv.lock file to lock exact versions of dependencies.
+          Cache is tied to uv.lock file. 
+          EOF
+            uv pip install -r pyproject.toml
+
+          else
+            echo "Error: No dependency file found - expect one of uv.lock, requirements.txt or pyproject.toml"
+            exit 1
+          fi
+
+  - name: Install Dependencies (pipenv)
+    if: ${{ inputs.dependency-manager == 'pipenv'}}
+    shell: bash
+    run: |
+
+          # Create venv in project
+          export PIPENV_VENV_IN_PROJECT=1
+
+          # Parse dependencies from Pipfile.lock
+          if [ -f "Pipfile.lock" ]; then
+            echo "Installing dependencies from Pipfile.lock"
+          pipenv install --ignore-pipfile
+            
+          # Parse dependencies from Pipfile
+          elif [ -f "Pipfile" ]; then
+            cat <<EOF
+          No Pipfile.lock file detected. Installing dependencies from Pipfile.
+          Recommend creating a Pipfile.lock. Cache is tied to Pipfile.lock.
+          EOF 
+            pipenv install
+          
+          # Parse dependencies from requirements.txt
+          elif [ -f "requirements.txt" ]; then
+            cat <<EOF
+          No Pipfile.lock or Pipfile detected. Installing dependencies from rqeuirements.txt.
+          Recommend creating a Pipfile.lock to lock exact versions of dependencies.
+          Cache is tied to Pipfile.lock. 
+          EOF
+            pipenv run pip install -r requirements.txt
+
+          else
+            echo "Error: No dependency file found - expect one of Pipfile.lock, Pipfile, requirements.txt"
+            exit 1
+          fi
+
+
+  - name: Install Dependencies (venv)
+    if: ${{ inputs.dependency-manager == 'venv'}}
+    shell: bash
+    run: |
+          
+          python -m venv .venv
+          source .venv/bin/activate
+          
+          # Parse dependencies from requirements.txt
+          if [ -f "requirements.txt" ]; then
+            echo "Installing dependencies from requirements.txt"  
+            pip install -r requirements.txt
+
+          else
+            echo "Error: No dependency file found - expected requirements.txt"
+            exit 1
+          fi
+
+  - name: Install CI Dependencies
+    shell: bash
+    run: |
+          # Install dependencies for CI
+          CI_PACKAGES="bandit flake8 pylint pytest pytest-cov"
+          source .venv/bin/activate
+          pip install $CI_PACKAGES

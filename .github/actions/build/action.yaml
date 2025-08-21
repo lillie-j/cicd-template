@@ -1,0 +1,58 @@
+name: Docker Build
+description: Builds a Docker Image
+
+inputs:
+  build-context:
+    description: The folder (path written relative to repo root) in which the Dockerfile/build context
+    required: true
+  container-repo:
+    description: Name of the top level folder in your container registry (used to tag/push image)
+    required: true
+  build-platform:
+    description: Target platform for your docker image (defaults to linux/amd64)
+    required: false
+    default: "linux/amd64"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Docker
+      uses: docker/setup-buildx-action@v2
+
+    - name: Generate Docker Tag
+      id: set_tag
+      shell: bash
+      run: |
+        BRANCH=$(echo "${{ github.ref_name || 'manual' }}" | sed 's/\//-/g')
+
+        if [ -z "${{ github.sha }}" ]; then
+          SHORT_SHA="${{ github.run_id }}"
+        else
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+        fi
+
+        BUILD_CONTEXT_RELATIVE_FOLDER=$(basename "${{ inputs.build-context }}")
+
+        TAG="${BUILD_CONTEXT_RELATIVE_FOLDER}-${BRANCH}-${SHORT_SHA}"
+        echo "Generated Tag: $TAG"
+        echo "TAG=$TAG" >> $GITHUB_ENV
+
+    - name: Build and tag Docker image
+      shell: bash
+      run: |
+        docker buildx build \
+          --platform "${{ inputs.build-platform }}" \
+          --tag "${{ env.TAG }}" \
+          --file "${{ inputs.build-context }}/Dockerfile" \
+          "${{ inputs.build-context }}" \
+          --load
+
+        docker save "${{ env.TAG }}" -o "${{ env.TAG }}.tar"
+        gzip "${{ env.TAG }}.tar"
+
+    - name: Upload Image
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ env.TAG }}
+        path: ${{ env.TAG }}.tar.gz
+        if-no-files-found: ignore

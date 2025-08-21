@@ -1,0 +1,27 @@
+name: 'Security Scan (Bandit)'
+description: Performs a Bandit Security Scan on Python Code. Outputs a Scan Report (HTML) as an artifact.
+inputs:
+  exclude-folders:
+    description: Comma separated list of folders (no spaces) to exclude from scan
+    required: false
+    default: './tests'
+runs:
+  using: "composite"
+  steps:
+  - name: Run Bandit Scan
+    shell: bash
+    # Scan configured to never fail due to over-cautious vulnerability detection.
+    # User can view scan report and address vulnerabilities after workflow run.
+    run: |
+          source .venv/bin/activate
+          venv_str="./.venv"
+          folders_to_exclude="${{  inputs.exclude-folders  }},$venv_str"
+            bandit -r . -x $folders_to_exclude -f html -o bandit_report.html || true
+
+
+  - name: Upload Bandit Scan Report
+    uses: actions/upload-artifact@v4
+    with:
+      name: bandit_report-${{ github.ref_name }}-${{ github.run_id}}.html
+      path: bandit_report.html
+      if-no-files-found: ignore
