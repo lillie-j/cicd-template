@@ -96,7 +96,7 @@ jobs:
         uses: ./.github/actions/build
         with:
           build-context: ${{ matrix.context }}
-          container-repo: "test"
+          cloud-registry: "none"
           build-platform: "linux/amd64"
 
       
