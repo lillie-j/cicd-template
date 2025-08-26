@@ -19,11 +19,20 @@ runs:
 
         # Parse Python version from pyproject.toml - picks the minimum compatible version
         elif [ -f pyproject.toml ]; then
-          PYTHON_VER=$(grep 'requires-python' pyproject.toml | head -1 | cut -d'"' -f2 | sed 's/>=//')
+          PYTHON_VER=$(
+            grep 'requires-python' pyproject.toml \
+            | head -1 \
+            | awk 'match($0, /[0-9]+\.[0-9]+(\.[0-9]+)?/, m) { print m[0]}'
+            )
+
 
         # Parse Python version from Pipfile
         elif [ -f Pipfile ]; then 
-          PYTHON_VER=$(grep 'python_version' Pipfile | head -1 | cut -d'"' -f2)
+          PYTHON_VER=$(
+            grep 'python_version' Pipfile \
+            | head -1 \
+            | awk 'match($0, /[0-9]+\.[0-9]+(\.[0-9]+)?/, m) { print m[0]}'
+            )
         fi
 
         # Raise error if no version found

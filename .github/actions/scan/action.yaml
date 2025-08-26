@@ -18,10 +18,14 @@ runs:
           folders_to_exclude="${{  inputs.exclude-folders  }},$venv_str"
             bandit -r . -x $folders_to_exclude -f html -o bandit_report.html || true
 
+  - name: Get short SHA
+    id: short-sha
+    run: echo "short_sha"=$(echo ${{ github.sha }} | cut -c1-7)" >> $GITHUB_OUTPUT"
+
 
   - name: Upload Bandit Scan Report
     uses: actions/upload-artifact@v4
     with:
-      name: bandit_report-${{ github.ref_name }}-${{ github.run_id}}.html
+      name: bandit_report-${{ github.ref_name }}-${{ steps.vars.outputs.short_sha }}.html
       path: bandit_report.html
       if-no-files-found: ignore

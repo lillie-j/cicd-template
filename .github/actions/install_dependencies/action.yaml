@@ -142,6 +142,6 @@ runs:
     shell: bash
     run: |
           # Install dependencies for CI
-          CI_PACKAGES="bandit flake8 pylint pytest pytest-cov"
+          CI_PACKAGES="bandit flake8 pybadges pylint pytest pytest-cov"
           source .venv/bin/activate
           pip install $CI_PACKAGES

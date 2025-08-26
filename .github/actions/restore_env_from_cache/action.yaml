@@ -1,5 +1,5 @@
 name: Checkout Repo & Restore Environment
-description: Checks out a repo & reproduces a cached environment
+description: Reproduces a cached environment
 inputs:
   dependency-manager:
     description: The package manager used in this project (uv, pipenv, or venv)
