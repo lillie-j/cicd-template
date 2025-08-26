@@ -6,6 +6,15 @@ name: CI Template Process
 
 on:
   workflow_dispatch:
+   
+env:
+  DEPENDENCY_MANAGER: 'uv' # Dependency manager used to manage your project - should be one of 'uv' 'pipenv' or 'venv'
+  EXCLUDE_FOLDERS_FROM_SCAN: './tests' # Comma separated list of files to exclude from security scan relative to root e.g. './tests,./src' (.venv automatically excluded)
+  EXCLUDE_FOLDERS_FROM_LINTING: 'tests' # Comma separated list of files to exclude from linting NOT relative to root e.g. 'tests,src' (.venv automatically excluded)
+  IGNORE_LINTING_FAILURES: 'true' # 'true' to cause linting to always pass, 'false' to cause linting to fail if any issues detected
+  DOCKER_CONTEXT: '["./src/backend", "./src/frontend"]' #JSON list of folders relative to root which include a docker build context/Dockerfile (want to create images for)
+  CLOUD_REGISTRY: 'none' # Cloud provider which hosts your image registry - should be one of 'aws' 'azure' or 'none'. If none, will output image as a .tar.gz artifact,
+  BUILD_PLATFORM: 'linux/amd64' # Platform to build your image for - must be supported by Docker
 
 jobs:
   Setup:
@@ -26,7 +35,7 @@ jobs:
       - name: Install Dependencies
         uses: ./.github/actions/install_dependencies
         with:
-          dependency-manager: 'uv' 
+          dependency-manager: ${{ env.DEPENDENCY_MANAGER }} 
         
 
   Test:
@@ -39,7 +48,7 @@ jobs:
       - name: Restore environment
         uses: ./.github/actions/restore_env_from_cache
         with:
-          dependency-manager: 'uv'
+          dependency-manager: ${{ env.DEPENDENCY_MANAGER }} 
 
       - name: Run Tests
         uses: ./.github/actions/test
@@ -55,12 +64,12 @@ jobs:
       - name: Restore environment
         uses: ./.github/actions/restore_env_from_cache
         with:
-          dependency-manager: 'uv'
+          dependency-manager: ${{ env.DEPENDENCY_MANAGER }} 
 
       - name: Run Bandit Scan
         uses: ./.github/actions/scan
         with:
-          exclude-folders: './tests'
+          exclude-folders: ${{ env.EXCLUDE_FOLDERS_FROM_SCAN }} 
 
 
   Lint:
@@ -73,13 +82,13 @@ jobs:
       - name: Restore environment
         uses: ./.github/actions/restore_env_from_cache
         with:
-          dependency-manager: 'uv'
+          dependency-manager: ${{ env.DEPENDENCY_MANAGER }} 
       
       - name: Lint
         uses: ./.github/actions/lint
         with:
-          folders-to-exclude: 'tests,.venv'
-          ignore-failures: 'true'
+          folders-to-exclude: ${{ env.EXCLUDE_FOLDERS_FROM_LINTING }} 
+          ignore-failures: ${{ env.IGNORE_LINTING_FAILURES }} 
 
        
   Docker_Build:
@@ -87,7 +96,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        context: [./src/backend, ./src/frontend]
+        context: ${{ fromJSON(env.DOCKER_CONTEXT) }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -96,9 +105,8 @@ jobs:
         uses: ./.github/actions/build
         with:
           build-context: ${{ matrix.context }}
-          container-repo: "test"
-          build-platform: "linux/amd64"
-
+          cloud-registry: ${{ env.CLOUD_REGISTRY }}
+          build-platform: ${{ env.BUILD_PLATFORM }}
       
 
 

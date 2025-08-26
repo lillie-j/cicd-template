@@ -12,59 +12,21 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: Validate ignore-failures
+      shell: bash
+      run: $GITHUB_ACTION_PATH/../common_scripts/check_membership.sh "${{ inputs.ignore-failures }}" "true false"
+
     - name: Lint Code (Flake 8)
       shell: bash
-      run: |
-        source .venv/bin/activate
-        if [[ "${{ inputs.ignore-failures }}" == "true" ]]; then
-          flake8 . --exclude="${{ inputs.folders-to-exclude}},.venv" --exit-zero
-
-        elif [[ "${{ inputs.ignore-failures }}" == "false" ]]; then
-          flake8 . --exclude="${{ inputs.folders-to-exclude}},.venv"
-
-        else
-          echo "ignore-failures must be either 'true' or 'false'"
-          exit 1
-        fi
-
-
+      run: $GITHUB_ACTION_PATH/scripts/lint_with_flake8.sh "${{ inputs.ignore-failures }}" "${{ inputs.folders-to-exclude }}"
+    
     - name: Lint Code (Pylint)
       shell: bash
-      run: |
-            source .venv/bin/activate
-            if [[ "${{ inputs.ignore-failures }}" == "true" ]]; then
-               pylint . --ignore="${{ inputs.folders-to-exclude}},.venv" | tee pylint.log || true
+      run: $GITHUB_ACTION_PATH/scripts/lint_with_pylint.sh "${{ inputs.ignore-failures }}" "${{ inputs.folders-to-exclude }}"
 
-            elif [[ "${{ inputs.ignore-failures }}" == "false" ]]; then
-              #Exit code of pipeline is last command, - tee should return 0. Need to fail pipeline if pylint does not return 0.
-              pylint . --ignore="${{ inputs.folders-to-exclude}},.venv" | tee pylint.log
-              EXIT_CODE=${PIPESTATUS[0]}
-              if [[ $EXIT_CODE -ne 0 ]]; then
-               exit $EXIT_CODE
-              fi
-              
-            else
-              echo "ignore-failures must be either 'true' or 'false'"
-              exit 1
-            fi
-
-            SCORE=$(grep "Your code has been rated at" pylint.log | awk '{print $7}' | cut -d'/' -f1)
-            COLOR="red"
-            if (( $(echo "$SCORE >=9" | bc -l) )); then
-              COLOR="green"
-            elif (( $(echo "$SCORE >=7" | bc -l ) )); then
-              COLOR="yellow"
-            elif (( $(echo "$SCORE >=5" | bc -l) )); then
-              COLOR="orange"  
-            elif (( $(echo "$SCORE <5" | bc -l) )); then
-              COLOR="red"
-            fi
-
-            python -m pybadges \
-            --left-text="pylint" \
-            --right-text=$SCORE \
-            --right-color=$COLOR \
-            > pylint-badge.svg
+    - name: Generate Pylint Badge
+      shell: bash
+      run: $GITHUB_ACTION_PATH/scripts/generate_pylint_badge.sh
 
     - name: Upload Pylint Score Badge
       uses: actions/upload-artifact@v4
