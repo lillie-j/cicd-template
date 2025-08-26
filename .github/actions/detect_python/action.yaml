@@ -10,4 +10,6 @@ runs:
     - name: Detect Python
       id: detect-python
       shell: bash
-      run: $GITHUB_ACTION_PATH/scripts/detect_version.sh
+      run: | 
+        result=$($GITHUB_ACTION_PATH/scripts/detect_version.sh)
+        echo "result=$result" >> "$GITHUB_OUTPUT"
