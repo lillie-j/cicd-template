@@ -1,8 +1,8 @@
 #!/bin/bash
 source .venv/bin/activate
 
-if [ -f "pylint.log" ]; then
-  echo "pylint.log does not exist to parse score from."
+if [ -f "$GITHUB_WORKSPACE/pylint.log" ]; then
+  echo '"$GITHUB_WORKSPACE/pylint.log" does not exist to parse score from.'
   exit 1
 fi
 

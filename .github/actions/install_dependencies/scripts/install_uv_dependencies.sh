@@ -33,3 +33,12 @@ else
 echo "Error: No dependency file found - expect one of uv.lock, requirements.txt or pyproject.toml"
 exit 1
 fi
+
+if [ -f "requirements-ci.txt" ]; then
+  uv pip install -r requirements-ci.txt
+
+else
+  echo "requirements-ci.txt" not found
+  exit 1
+
+fi

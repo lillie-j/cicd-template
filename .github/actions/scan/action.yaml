@@ -16,6 +16,7 @@ runs:
 
   - name: Get short SHA
     id: short-sha
+    shell: bash
     run: echo "short_sha"=$(echo ${{ github.sha }} | cut -c1-7)" >> $GITHUB_OUTPUT"
 
   - name: Upload Bandit Scan Report

@@ -103,9 +103,17 @@ jobs:
       - name: Build Image
         uses: ./.github/actions/build
         with:
-          build-context: ${{ matrix.context }}
+          docker-context-path: ${{ matrix.context }}
           cloud-registry: ${{ env.CLOUD_REGISTRY }}
           build-platform: ${{ env.BUILD_PLATFORM }}
+          AWS_ACCESS_KEY_ID:
+          AWS_SECRET_ACCESS_KEY: 
+          AWS_REGION:
+          AZURE_CLIENT_ID:
+          AZURE_TENANT_ID:
+          AZURE_SUBSCRIPTION_ID:
+          AZURE_CLIENT_SECRET:
+
       
 
 
