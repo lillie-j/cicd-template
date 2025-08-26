@@ -12,4 +12,4 @@ runs:
       shell: bash
       run: | 
         result=$($GITHUB_ACTION_PATH/scripts/detect_version.sh)
-        echo "result=$result" >> "$GITHUB_OUTPUT"
+        echo "result="$result"" >> "$GITHUB_OUTPUT"

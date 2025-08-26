@@ -1,6 +1,10 @@
 #!/bin/bash
-uv venv
-source .venv/bin/activate
+if [ -d ".venv" ]; then
+  exit 0
+else
+  uv venv
+  source .venv/bin/activate
+fi
 
 # Parse dependencies from uv.lock
 if [ -f "uv.lock" ]; then
