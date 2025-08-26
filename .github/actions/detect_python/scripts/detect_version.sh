@@ -29,5 +29,6 @@ if [ -z "$PYTHON_VER" ]; then
     exit 1
 fi
 
-echo "Detected Python version: $PYTHON_VER"
-echo "version=$PYTHON_VER" >> $GITHUB_OUTPUT
+echo "Detected Python version:"
+echo "$PYTHON_VER"
+

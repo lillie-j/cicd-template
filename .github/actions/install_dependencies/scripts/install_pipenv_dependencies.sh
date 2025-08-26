@@ -1,5 +1,8 @@
 #!/bin/bash
 export PIPENV_VENV_IN_PROJECT=1
+export PIPENV_IGNORE_VIRTUALENVS=1
+
+python -m pip install pipenv
 
 # Parse dependencies from Pipfile.lock
 if [ -f "Pipfile.lock" ]; then
@@ -7,11 +10,12 @@ if [ -f "Pipfile.lock" ]; then
 pipenv install --ignore-pipfile
   
 # Parse dependencies from Pipfile
+
 elif [ -f "Pipfile" ]; then
-  cat <<EOF
+    cat <<EOF
 No Pipfile.lock file detected. Installing dependencies from Pipfile.
-Recommend creating a Pipfile.lock. Cache is tied to Pipfile.lock.
-EOF 
+Recommend creating a Pipfile.lock. Cache is tied to Pipfile.lock
+EOF
   pipenv install
 
 # Parse dependencies from requirements.txt

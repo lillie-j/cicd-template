@@ -12,8 +12,9 @@ elif [ -f "requirements.txt" ]; then
     cat <<EOF
 No uv.lock file detected. Installing dependencies from requirements.txt.
 Recommend creating a uv.lock file. Cache is tied to uv.lock file.
-EOF 
-uv pip sync requirements.txt
+EOF
+    uv pip sync requirements.txt
+
 
 # Parse dependencies from pyproject.toml
 elif [ -f "pyproject.toml" ]; then
