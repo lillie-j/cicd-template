@@ -5,12 +5,13 @@ import os
 
 
 def known_vulnerability(user_input):
-    os.system("echo " + user_input)
+    subprocess.Popen(user_input, shell=True)
 
 
 if __name__ == "__main__":
 
-    known_vulnerability(input("Enter Your name:"))
+    user_input = input("Enter:")
+    known_vulnerability(user_input)
     # Use Popen() method so that process is not blocking
     api_server = subprocess.Popen(
         [
