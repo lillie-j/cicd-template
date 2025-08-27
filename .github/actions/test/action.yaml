@@ -7,9 +7,14 @@ runs:
     shell: bash
     run: $GITHUB_ACTION_PATH/scripts/run_tests.sh
 
+  - name: Get short SHA
+    id: short-sha
+    shell: bash
+    run: echo "short_sha"=$(echo ${{ github.sha }} | cut -c1-7)" >> $GITHUB_OUTPUT"
+
   - name: Upload Test Coverage Report
     uses: actions/upload-artifact@v4
     with:
-      name: coverage_report-${{ github.ref_name }}-${{ github.run_id}}
+      name: coverage_report-${{ github.ref_name }}-${{ steps.vars.outputs.short_sha }}
       path: htmlcov/
       if-no-files-found: ignore

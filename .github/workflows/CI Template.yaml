@@ -12,8 +12,16 @@ env:
   EXCLUDE_FOLDERS_FROM_SCAN: './tests' # Comma separated list of files to exclude from security scan relative to root e.g. './tests,./src' (.venv automatically excluded)
   EXCLUDE_FOLDERS_FROM_LINTING: 'tests' # Comma separated list of files to exclude from linting NOT relative to root e.g. 'tests,src' (.venv automatically excluded)
   IGNORE_LINTING_FAILURES: 'true' # 'true' to cause linting to always pass, 'false' to cause linting to fail if any issues detected
-  CLOUD_REGISTRY: 'none' # Cloud provider which hosts your image registry - should be one of 'aws' 'azure' or 'none'. If none, will output image as a .tar.gz artifact,
+  CLOUD_REGISTRY: 'aws' # Cloud provider which hosts your image registry - should be one of 'aws' 'azure' or 'none'. If none, will output image as a .tar.gz artifact,
   BUILD_PLATFORM: 'linux/amd64' # Platform to build your image for - must be supported by Docker
+
+  # AWS/ECR - Comment out if CLOUD_REGISTRY = 'aws'
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  AWS_REGION: ${{ secrets.AWS_REGION }}
+
+  # Azure/ACR - Comment out if CLOUD_REGISTRY = 'azure' - WIP
+
 
 jobs:
   Setup:
@@ -106,14 +114,10 @@ jobs:
           docker-context-path: ${{ matrix.context }}
           cloud-registry: ${{ env.CLOUD_REGISTRY }}
           build-platform: ${{ env.BUILD_PLATFORM }}
-          AWS_ACCESS_KEY_ID:
-          AWS_SECRET_ACCESS_KEY: 
-          AWS_REGION:
+          AWS_ACCESS_KEY_ID: ${{ env.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ env.AWS_REGION }}
           AZURE_CLIENT_ID:
           AZURE_TENANT_ID:
           AZURE_SUBSCRIPTION_ID:
           AZURE_CLIENT_SECRET:
-
-      
-
-

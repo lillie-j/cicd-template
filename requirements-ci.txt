@@ -4,4 +4,4 @@ pybadges==3.0.1
 pylint==3.3.8
 pytest==8.4.1
 pytest_cov==6.2.1
-setuptools==67.8.0
+setuptools==80.9.0
