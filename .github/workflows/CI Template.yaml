@@ -71,7 +71,8 @@ jobs:
     needs: Setup
     runs-on: ubuntu-latest
     strategy:
-      matrix: ["python","github-actions"]
+      matrix:
+        language: ["python","actions"]
     permissions:
      security-events: write
      actions: read
