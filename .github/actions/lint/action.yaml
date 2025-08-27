@@ -32,6 +32,6 @@ runs:
     - name: Upload Pylint Score Badge
       uses: actions/upload-artifact@v4
       with:
-        name: pylint-badge-${{ steps.vars.outputs.short_sha }}.svg
+        name: pylint-badge-${{ steps.short-sha.outputs.short_sha }}.svg
         path: pylint-badge.svg
         if-no-files-found: ignore

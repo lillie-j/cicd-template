@@ -91,8 +91,8 @@ runs:
       SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
       BUILD_CONTEXT_RELATIVE_FOLDER=$(basename "${{ inputs.docker-context-path }}")
       REPO_NAME=$(echo "${{ github.repository }}" | cut -d'/' -f2)
-      TAG="${REPO_NAME}:${BUILD_CONTEXT_RELATIVE_FOLDER}-${BRANCH}-${SHORT_SHA}"
-      FILESYSTEM_FRIENDLY_TAG="${REPO_NAME}-${BUILD_CONTEXT_RELATIVE_FOLDER}-${BRANCH}-${SHORT_SHA}"
+      TAG="${REPO_NAME}:${BUILD_CONTEXT_RELATIVE_FOLDER}-${SHORT_SHA}"
+      FILESYSTEM_FRIENDLY_TAG="${REPO_NAME}-${BUILD_CONTEXT_RELATIVE_FOLDER}-${SHORT_SHA}"
 
       echo "Generated Tag: $TAG"
       echo "TAG=$TAG" >> $GITHUB_ENV

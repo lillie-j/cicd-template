@@ -15,6 +15,6 @@ runs:
   - name: Upload Test Coverage Report
     uses: actions/upload-artifact@v4
     with:
-      name: coverage_report-${{ steps.vars.outputs.short_sha }}
+      name: coverage_report-${{ steps.short-sha.outputs.short_sha }}
       path: htmlcov/
       if-no-files-found: ignore
