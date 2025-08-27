@@ -24,10 +24,6 @@ runs:
       shell: bash
       run: $GITHUB_ACTION_PATH/scripts/lint_with_pylint.sh "${{ inputs.ignore-failures }}" "${{ inputs.folders-to-exclude }}"
 
-    - name: Generate Pylint Badge
-      shell: bash
-      run: $GITHUB_ACTION_PATH/scripts/generate_pylint_badge.sh
-
     - name: Upload Pylint Score Badge
       uses: actions/upload-artifact@v4
       with:

@@ -1,6 +1,10 @@
 #!/bin/bash
-uv venv
-source .venv/bin/activate
+if [ -d ".venv" ]; then
+  exit 0
+else
+  uv venv
+  source .venv/bin/activate
+fi
 
 # Parse dependencies from uv.lock
 if [ -f "uv.lock" ]; then
@@ -28,4 +32,13 @@ uv pip install -r pyproject.toml
 else
 echo "Error: No dependency file found - expect one of uv.lock, requirements.txt or pyproject.toml"
 exit 1
+fi
+
+if [ -f "requirements-ci.txt" ]; then
+  uv pip install -r requirements-ci.txt
+
+else
+  echo "requirements-ci.txt" not found
+  exit 1
+
 fi

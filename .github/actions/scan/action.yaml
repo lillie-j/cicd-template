@@ -1,26 +1,16 @@
 name: 'Security Scan (Bandit)'
 description: Performs a Bandit Security Scan on Python Code. Outputs a Scan Report (HTML) as an artifact.
 inputs:
-  exclude-folders:
-    description: Comma separated list of folders (no spaces) to exclude from scan
-    required: false
-    default: './tests'
+  language:
+    description: Language to perform CodeQL scanning for (python, javascript) etc.
+    required: true
 runs:
   using: "composite"
   steps:
-  - name: Run Bandit Scan
-    shell: bash
-    # Scan configured to never fail due to over-cautious vulnerability detection.
-    # User can view scan report and address vulnerabilities after workflow run.
-    run: $GITHUB_ACTION_PATH/scripts/bandit_scan.sh "${{ inputs.exclude-folders }}"
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: ${{ inputs.language }}
 
-  - name: Get short SHA
-    id: short-sha
-    run: echo "short_sha"=$(echo ${{ github.sha }} | cut -c1-7)" >> $GITHUB_OUTPUT"
-
-  - name: Upload Bandit Scan Report
-    uses: actions/upload-artifact@v4
-    with:
-      name: bandit_report-${{ github.ref_name }}-${{ steps.vars.outputs.short_sha }}.html
-      path: bandit_report.html
-      if-no-files-found: ignore
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v3

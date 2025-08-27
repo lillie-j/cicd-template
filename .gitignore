@@ -1,5 +1,4 @@
 **/__pycache__/**
 pylint*
-bandit*
 !bandit.yaml
 *.xlsx

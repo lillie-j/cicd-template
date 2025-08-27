@@ -6,15 +6,25 @@ name: CI Template Process
 
 on:
   workflow_dispatch:
+
+  pull_request:
+    branches: [main]
    
 env:
   DEPENDENCY_MANAGER: 'uv' # Dependency manager used to manage your project - should be one of 'uv' 'pipenv' or 'venv'
   EXCLUDE_FOLDERS_FROM_SCAN: './tests' # Comma separated list of files to exclude from security scan relative to root e.g. './tests,./src' (.venv automatically excluded)
   EXCLUDE_FOLDERS_FROM_LINTING: 'tests' # Comma separated list of files to exclude from linting NOT relative to root e.g. 'tests,src' (.venv automatically excluded)
   IGNORE_LINTING_FAILURES: 'true' # 'true' to cause linting to always pass, 'false' to cause linting to fail if any issues detected
-  DOCKER_CONTEXT: '["./src/backend", "./src/frontend"]' #JSON list of folders relative to root which include a docker build context/Dockerfile (want to create images for)
+
   CLOUD_REGISTRY: 'none' # Cloud provider which hosts your image registry - should be one of 'aws' 'azure' or 'none'. If none, will output image as a .tar.gz artifact,
   BUILD_PLATFORM: 'linux/amd64' # Platform to build your image for - must be supported by Docker
+
+  # AWS/ECR - Comment out if CLOUD_REGISTRY = 'aws'
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  AWS_REGION: ${{ secrets.AWS_REGION }}
+
+  # Azure/ACR - Comment out if CLOUD_REGISTRY = 'azure' - WIP
 
 jobs:
   Setup:
@@ -61,15 +71,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Restore environment
-        uses: ./.github/actions/restore_env_from_cache
-        with:
-          dependency-manager: ${{ env.DEPENDENCY_MANAGER }} 
-
-      - name: Run Bandit Scan
+      - name: Run CodeQL Analysis
         uses: ./.github/actions/scan
         with:
-          exclude-folders: ${{ env.EXCLUDE_FOLDERS_FROM_SCAN }} 
+          language: 'python'
 
 
   Lint:
@@ -95,8 +100,10 @@ jobs:
     needs: Test
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        context: ${{ fromJSON(env.DOCKER_CONTEXT) }}
+        context: ["./src/backend","./src/frontend"]
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -104,9 +111,14 @@ jobs:
       - name: Build Image
         uses: ./.github/actions/build
         with:
-          build-context: ${{ matrix.context }}
+          docker-context-path: ${{ matrix.context }}
           cloud-registry: ${{ env.CLOUD_REGISTRY }}
           build-platform: ${{ env.BUILD_PLATFORM }}
-      
-
+          AWS_ACCESS_KEY_ID: ${{ env.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ env.AWS_REGION }}
+          AZURE_CLIENT_ID:
+          AZURE_TENANT_ID:
+          AZURE_SUBSCRIPTION_ID:
+          AZURE_CLIENT_SECRET:
 
