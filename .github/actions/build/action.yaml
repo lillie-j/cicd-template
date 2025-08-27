@@ -146,6 +146,6 @@ runs:
     if: ${{ inputs.cloud-registry == 'none'}}
     uses: actions/upload-artifact@v4
     with:
-      name: ${{ env.TAG }}
-      path: ${{ env.TAG }}.tar.gz
+      name: ${{ env.FILESYSTEM_FRIENDLY_TAG }}
+      path: ${{ env.FILESYSTEM_FRIENDLY_TAG }}.tar.gz
       if-no-files-found: ignore
