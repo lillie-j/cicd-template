@@ -24,11 +24,16 @@ runs:
       shell: bash
       run: $GITHUB_ACTION_PATH/scripts/lint_with_pylint.sh "${{ inputs.ignore-failures }}" "${{ inputs.folders-to-exclude }}"
 
+    
+    - name: Get short SHA
+      id: short-sha
+      shell: bash
+      run: echo "short_sha=$(echo '${{ github.sha }}' | cut -c1-7)" >> $GITHUB_OUTPUT
+
+
     - name: Upload Pylint Score Badge
       uses: actions/upload-artifact@v4
       with:
-        name: pylint-badge-${{ github.ref_name }}-${{ github.run_id}}.svg
+        name: pylint-badge-${{ steps.short-sha.outputs.short_sha }}.svg
         path: pylint-badge.svg
         if-no-files-found: ignore
-
-  

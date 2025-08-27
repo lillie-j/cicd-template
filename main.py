@@ -1,9 +1,16 @@
 """Entrypoint to spin up API server & frontend on local machine for validation"""
 
 import subprocess
+import os
+
+
+def known_vulnerability(user_input):
+    subprocess.Popen(user_input, shell=True)
+
 
 if __name__ == "__main__":
 
+    known_vulnerability("vulnerability")
     # Use Popen() method so that process is not blocking
     api_server = subprocess.Popen(
         [
