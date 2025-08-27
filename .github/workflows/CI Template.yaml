@@ -68,15 +68,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Restore environment
-        uses: ./.github/actions/restore_env_from_cache
-        with:
-          dependency-manager: ${{ env.DEPENDENCY_MANAGER }} 
-
-      - name: Run Bandit Scan
+      - name: Run CodeQL Analysis
         uses: ./.github/actions/scan
         with:
-          exclude-folders: ${{ env.EXCLUDE_FOLDERS_FROM_SCAN }} 
+          language: 'python'
 
 
   Lint:
@@ -102,6 +97,7 @@ jobs:
     needs: Test
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         context: ["./src/backend","./src/frontend"]
     steps:
