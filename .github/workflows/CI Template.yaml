@@ -79,11 +79,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Deps
+        run: |
+          python-m venv .venv
+          source .venv/bin/activate
+          pip install -r requirements.txt
+
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
           languages: ${{ matrix.language }}
           queries: security-extended
+          python-taint-model: local-source
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3

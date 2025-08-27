@@ -10,8 +10,7 @@ def known_vulnerability(user_input):
 
 if __name__ == "__main__":
 
-    user_input = input("Enter:")
-    known_vulnerability(user_input)
+    known_vulnerability("vulnerability")
     # Use Popen() method so that process is not blocking
     api_server = subprocess.Popen(
         [
