@@ -70,6 +70,8 @@ jobs:
   Security-Scan:
     needs: Setup
     runs-on: ubuntu-latest
+    strategy:
+      matrix: ["python","actions"]
     permissions:
      security-events: write
      actions: read
@@ -82,7 +84,7 @@ jobs:
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
-          languages: 'python'
+          languages: ${{ matrix.language }}
           queries: security-extended
 
       - name: Perform CodeQL Analysis
