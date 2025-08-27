@@ -96,7 +96,7 @@ runs:
 
       echo "Generated Tag: $TAG"
       echo "TAG=$TAG" >> $GITHUB_ENV
-      echo "FILESYSTEM_FRIENDLY_TAG=$FS_FRIENDLY_TAG" >> $GITHUB_ENV
+      echo "FILESYSTEM_FRIENDLY_TAG=$FILESYSTEM_FRIENDLY_TAG" >> $GITHUB_ENV
 
   - name: Build and tag Docker image
     if: ${{ inputs.cloud-registry == 'none'}}
