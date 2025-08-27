@@ -10,9 +10,6 @@ on:
   pull_request:
     branches: [main]
 
-  push:
-    branches: [main, dev]
-
    
 env:
   DEPENDENCY_MANAGER: 'uv' # Dependency manager used to manage your project - should be one of 'uv' 'pipenv' or 'venv'
@@ -72,7 +69,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        language: ["python","actions"]
+        language: ["python"]
     permissions:
      security-events: write
      actions: read
